@@ -26,7 +26,7 @@ def main():
     # Enter user input to DB
     to_database(users_entry)
 
-#   con = lite.connect('test.db')
+#   con = lite.connect('entries.db')
 #   with con:
 #       cur = con.cursor()
 #       cur.execute("SELECT * FROM Test")
@@ -60,6 +60,13 @@ def welcome_menu():
 
 # ***************************************************************************** 
 # This will be where we get the users input    
+#
+# Note: I have an idea that I want the user to be able to enter journal
+# entries from the command line or from their chosen text editor. In order to
+# to be able to enter from the command line, they should be able to type:
+#   journal -m "Their own stuff that they want to add into their entries"
+# otherwise it will open their default text editors.
+#
 def user_input():
 
     print '\n' + str(date.today()) + ':'
@@ -75,10 +82,10 @@ def to_database(users_input):
     info_for_db = (ordinal_date, users_input)
     
     # connect to database
-    con = lite.connect('test.db')
+    con = lite.connect('entries.db')
     with con:
         cur = con.cursor()
-        cur.execute("INSERT INTO Test VALUES(?,?)", info_for_db)
+        cur.execute("INSERT INTO Entries VALUES(?,?)", info_for_db)
     print 'users input succesfully put into db'
     return
 
