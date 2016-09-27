@@ -3,22 +3,29 @@
 # This program is a hacker's journal entries.
 # This program had 1 main function 'Keep a database of peoples entries'
 # Other Functions:
-#   View Entries, Delete Entries, Search entries.
+#   LOG IN, View Entries, Delete Entries, Search entries.
 
 # Additional features that i would like to have: Encrypted entries,
 #   User accounts, Set up SHH Key logins, and a BareBones web app.
 
 # Why am I doing this? Penzu sucks, i mean it reeeaaally sucks. its too fancy.
 # Keep Open Source and Free as long as possible.
+#
+# UPDATE (Sept 26, 2016): I will make a quick local journal program then
+#   Proceed to make a web server version, maybe with SSH storage abilities...
 
 import sys
 import sqlite3 as lite
 from datetime import date, datetime
+import getpass
 
 def main():
 
+    user_rows = get_usernames_fDB()
+
+    log_in(user_rows)
     # Introduce program
-    welcome_menu()
+    menu_options()
 
     # Open a text editor or just accept user input from the command line
     users_entry = user_input()
@@ -37,14 +44,38 @@ def main():
     return 0
 
 # ***************************************************************************** 
-# Simple Welcome Menu with options to enter entry and exit
-def welcome_menu():
+# A login/sign-up function. also a quick greeting.
+def log_in(users):
+
     # Print many new lines
     for i in range(50):
         print "\n"
 
     print "Greetings, welcome to QEntries"
-    print "  A -Sal Camara- Program  "
+    print "  A -Sal Camara- Program  \n\n"
+
+    x = True
+    while(x):
+        
+        print '"If you are a new user type -1 into user"\n'
+        login_attempt = raw_input(u"Username: ")
+
+        # Check whether new user, otherwise check against current users
+        if login_attempt == '-1':
+            create_user()
+            x = False
+        else:
+            for user in users:
+                user_string = user[0]   # Take String from Tuple
+                if user_string == login_attempt:
+                    print 'your user name was found!'
+                    # ask for password #
+
+
+# ***************************************************************************** 
+# Simple Welcome Menu with options to enter entry and exit
+def menu_options():
+
 
     looper = True
     while(looper):
@@ -74,6 +105,30 @@ def user_input():
     print user_entry
     return user_entry
 
+# ************************ DATABASE - FUNCTIONS ******************************* 
+# ********************************* - ***************************************** 
+def create_user():
+    
+    uname = raw_input("[new] Username: ")
+    password = getpass.getpass('Password: ')
+    user_creds = (uname, password)
+
+    con = lite.connect('entries.db')
+    with con:
+        cur = con.cursor()
+        cur.execute("INSERT INTO User VALUES(?, ?)", user_creds)
+    return
+
+# ***************************************************************************** 
+def get_usernames_fDB():
+    con = lite.connect('entries.db')
+    with con:
+        cur = con.cursor()
+        cur.execute("Select name FROM User")
+        rows = cur.fetchall()
+    return rows
+
+# ***************************************************************************** 
 def to_database(users_input):
 
     ordinal_date = date.toordinal(date.today())
