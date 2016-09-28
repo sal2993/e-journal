@@ -23,11 +23,13 @@ def main():
 
     user_rows = get_usernames_fDB()
 
+    # Log into or create user
     log_in(user_rows)
+
     # Introduce program
     menu_options()
 
-    # Open a text editor or just accept user input from the command line
+    # Open a text editor or accept input from command line
     users_entry = user_input()
 
     # Enter user input to DB
@@ -66,8 +68,15 @@ def log_in(users):
             x = False
         else:
             for user in users:
+                print user
                 user_string = user[0]   # Take String from Tuple
-                if user_string == login_attempt:
+
+                # check if the username is in db
+                if user[0] == login_attempt:
+                    passw = getpass.getpass(u"Password: ")
+                    # if user is in db, check their password.
+                    if passw == user[1]:
+                        x = False
                     print 'your user name was found!'
                     # ask for password #
 
@@ -124,7 +133,7 @@ def get_usernames_fDB():
     con = lite.connect('entries.db')
     with con:
         cur = con.cursor()
-        cur.execute("Select name FROM User")
+        cur.execute("Select name, password FROM User")
         rows = cur.fetchall()
     return rows
 
