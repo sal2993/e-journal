@@ -35,13 +35,6 @@ def main():
     # Enter user input to DB
     to_database(users_entry, user_primary_key)
 
-#   con = lite.connect('entries.db')
-#   with con:
-#       cur = con.cursor()
-#       cur.execute("SELECT * FROM Test")
-#       rows = cur.fetchall()
-#       for row in rows:
-#           print row
     print "Recorded. "
     return 0
 
@@ -84,7 +77,6 @@ def log_in(users):
 # Simple Welcome Menu with options to enter entry and exit
 def menu_options():
 
-
     looper = True
     while(looper):
         print "Please enter a number."
@@ -117,20 +109,23 @@ def user_input():
 # ********************************* - ***************************************** 
 # Creates a User. Also returns the new users ID to properly add post to DB.
 def create_user():
-    
-    uname = raw_input("[new] Username: ")
-    password = getpass.getpass('Password: ')
-    user_creds = (uname, password)
 
+    
+    uname = raw_input("[new] Username: ")       # Get username
+    
+    password = getpass.getpass('Password: ')    # Get password
+    
+    user_creds = (uname, password)              # Add to Tuple
+
+    # Enter new information to DB
     con = lite.connect('entries.db')
     with con:
         cur = con.cursor()
         cur.execute("INSERT INTO Users(username, password) VALUES(?, ?)" \
         , user_creds)
-        last_id = cur.lastrowid
-        print last_id
-        # cur = con.cursor()
-        # cur.execute("SELECT UserID FROM Users Where Username = ?", user_id)
+        
+        # Grab the new users ID
+        last_id = cur.lastrowid 
     return last_id
 
 # ***************************************************************************** 
