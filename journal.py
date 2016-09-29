@@ -23,8 +23,8 @@ def main():
 
     user_rows = get_usernames_fDB()
 
-    # Log into or create user
-    log_in(user_rows)
+    # Log into or create user, Always returns User's ID key
+    user_primary_key = log_in(user_rows)
 
     # Introduce program
     menu_options()
@@ -33,7 +33,7 @@ def main():
     users_entry = user_input()
 
     # Enter user input to DB
-    to_database(users_entry)
+    to_database(users_entry, user_primary_key)
 
 #   con = lite.connect('entries.db')
 #   with con:
@@ -42,7 +42,7 @@ def main():
 #       rows = cur.fetchall()
 #       for row in rows:
 #           print row
-    print "worked."
+    print "Recorded. "
     return 0
 
 # ***************************************************************************** 
@@ -50,35 +50,34 @@ def main():
 def log_in(users):
 
     # Print many new lines
-    for i in range(50):
-        print "\n"
-
-    print "Greetings, welcome to QEntries"
-    print "  A -Sal Camara- Program  \n\n"
+    print "\nGreetings, welcome to QEntries"
 
     x = True
     while(x):
         
-        print '"If you are a new user type -1 into user"\n'
+        print '||New user? Type -1||'
         login_attempt = raw_input(u"Username: ")
 
-        # Check whether new user, otherwise check against current users
-        if login_attempt == '-1':
-            create_user()
+        if login_attempt == '-1':       # Check whether new user
+            new_user_id = create_user()
             x = False
-        else:
-            for user in users:
-                print user
-                user_string = user[0]   # Take String from Tuple
+            return new_user_id
 
+        else:                           # Existing user, Check credentials
+            for user in users:
                 # check if the username is in db
-                if user[0] == login_attempt:
-                    passw = getpass.getpass(u"Password: ")
+                if user[1] == login_attempt:
+                
                     # if user is in db, check their password.
-                    if passw == user[1]:
+                    passw = getpass.getpass(u"Password: ")
+                    
+                    if passw == user[2]:
                         x = False
+                        return user[0] # return user's primary key is needed
                     print 'your user name was found!'
                     # ask for password #
+    sys.exit(2)
+    return
 
 
 # ***************************************************************************** 
@@ -116,6 +115,7 @@ def user_input():
 
 # ************************ DATABASE - FUNCTIONS ******************************* 
 # ********************************* - ***************************************** 
+# Creates a User. Also returns the new users ID to properly add post to DB.
 def create_user():
     
     uname = raw_input("[new] Username: ")
@@ -125,32 +125,38 @@ def create_user():
     con = lite.connect('entries.db')
     with con:
         cur = con.cursor()
-        cur.execute("INSERT INTO User VALUES(?, ?)", user_creds)
-    return
+        cur.execute("INSERT INTO Users(username, password) VALUES(?, ?)" \
+        , user_creds)
+        last_id = cur.lastrowid
+        print last_id
+        # cur = con.cursor()
+        # cur.execute("SELECT UserID FROM Users Where Username = ?", user_id)
+    return last_id
 
 # ***************************************************************************** 
 def get_usernames_fDB():
     con = lite.connect('entries.db')
     with con:
         cur = con.cursor()
-        cur.execute("Select name, password FROM User")
+        cur.execute("Select * FROM Users")
         rows = cur.fetchall()
     return rows
 
 # ***************************************************************************** 
-def to_database(users_input):
+def to_database(users_input, user_primary_key):
 
+    # keep dates as gregorian ordinal
     ordinal_date = date.toordinal(date.today())
     
-    # need to change into to tuple to insert into the database with cur.execute
-    info_for_db = (ordinal_date, users_input)
+    # Entry into to tuple (needed to enter db)
+    info_for_db = (ordinal_date, users_input, user_primary_key)
     
     # connect to database
     con = lite.connect('entries.db')
     with con:
         cur = con.cursor()
-        cur.execute("INSERT INTO Entries VALUES(?,?)", info_for_db)
-    print 'users input succesfully put into db'
+        cur.execute("INSERT INTO Entries(Body, Date, UserId) VALUES(?,?, ?)" \
+        , info_for_db)
     return
 
         
