@@ -14,10 +14,13 @@
 # UPDATE (Sept 26, 2016): I will make a quick local journal program then
 #   Proceed to make a web server version, maybe with SSH storage abilities...
 
+# Known Bugs: 
+# 1) Database name is hardcoded fix that
+
 import sys
-import sqlite3 as lite
 from datetime import date, datetime
 import getpass
+import Model
 
 def main():
 
@@ -27,13 +30,21 @@ def main():
     user_primary_key = log_in(user_rows)
 
     # Introduce program
-    menu_options()
+    user_option = menu_options()
 
-    # Open a text editor or accept input from command line
-    users_entry = user_input()
+    if user_option == 1:
+        # Open a text editor or accept input from command line
+        users_input = user_entry_input()
+
+    elif user_option == 2:
+        # Open User To-Do List
+        users_input = input_task_todo()
+        
+    
+
 
     # Enter user input to DB
-    to_database(users_entry, user_primary_key)
+    to_database(users_input, user_primary_key)
 
     print "Recorded. "
     return 0
@@ -56,7 +67,8 @@ def log_in(users):
             x = False
             return new_user_id
 
-        else:                           # Existing user, Check credentials
+        # Existing user, Check credentials
+        else:
             for user in users:
                 # check if the username is in db
                 if user[1] == login_attempt:
@@ -80,14 +92,21 @@ def menu_options():
     looper = True
     while(looper):
         print "Please enter a number."
+        print "2 - View your 'To-Do's"
         print "1 - Make an Entry"
         print "0 - Exit"
         x = raw_input("> ")
-        if x == '1':
-            looper = False
-        elif x == '0':
+
+        if x == '0':
             sys.exit(0)
-    return
+        elif x == '1':
+            return 1
+            looper = False
+        elif x == '2':
+            return 2
+            looper = False
+            
+    return 0
 
 # ***************************************************************************** 
 # This will be where we get the users input    
@@ -98,60 +117,57 @@ def menu_options():
 #   journal -m "Their own stuff that they want to add into their entries"
 # otherwise it will open their default text editors.
 #
-def user_input():
+def user_entry_input():
 
     print '\n' + str(date.today()) + ':'
     user_entry = raw_input(">> ")
-    print user_entry
     return user_entry
 
+def input_task_todo():
+    return
 # ************************ DATABASE - FUNCTIONS ******************************* 
 # ********************************* - ***************************************** 
+def checktables():
+    # cur.execute("CREATE TABLE IF NOT EXISTS Temporary(Id INT)
+    return
+
 # Creates a User. Also returns the new users ID to properly add post to DB.
 def create_user():
 
     
     uname = raw_input("[new] Username: ")       # Get username
     
-    password = getpass.getpass('Password: ')    # Get password
+    tenta_password = getpass.getpass('Password: ')    # Get password
     
-    user_creds = (uname, password)              # Add to Tuple
-
-    # Enter new information to DB
-    con = lite.connect('entries.db')
-    with con:
-        cur = con.cursor()
-        cur.execute("INSERT INTO Users(username, password) VALUES(?, ?)" \
-        , user_creds)
-        
-        # Grab the new users ID
-        last_id = cur.lastrowid 
-    return last_id
+    # insert user info into user table in Model
+    user = Model.User(username=uname, password=tenta_password)
+    user.save()
+            
+    # return new user's ID
+    return user.id
 
 # ***************************************************************************** 
+# Get a list of all of the usernames and passwords
 def get_usernames_fDB():
-    con = lite.connect('entries.db')
-    with con:
-        cur = con.cursor()
-        cur.execute("Select * FROM Users")
-        rows = cur.fetchall()
+    usernames = Model.User
+    rows = []
+
+    # adds username/password to a tuple
+    for user in usernames.select():
+        rows.append((user.id, user.username, user.password))
     return rows
 
 # ***************************************************************************** 
+
 def to_database(users_input, user_primary_key):
 
     # keep dates as gregorian ordinal
-    ordinal_date = date.toordinal(date.today())
-    
-    # Entry into to tuple (needed to enter db)
-    info_for_db = (ordinal_date, users_input, user_primary_key)
-    
-    # connect to database
-    con = lite.connect('entries.db')
-    with con:
-        cur = con.cursor()
-        cur.execute("INSERT INTO Entries(Body, Date, UserId) VALUES(?,?, ?)" \
-        , info_for_db)
+    todays_date = date.today()
+
+    # Enter data to database *that was easy*
+    Model.Entry.create(owner_id=user_primary_key, body=users_input, \
+        timestamp=todays_date)
+
     return
 
         
