@@ -14,13 +14,13 @@
 # UPDATE (Sept 26, 2016): I will make a quick local journal program then
 #   Proceed to make a web server version, maybe with SSH storage abilities...
 
-# Known Bugs: 
-# 1) Database name is hardcoded fix that
 
 import sys
 from datetime import date, datetime
 import getpass
 import Model
+import hashlib
+import uuid
 
 def main():
 
@@ -32,20 +32,18 @@ def main():
     # Introduce program
     user_option = menu_options()
 
+    # User wants to enter a new journal entry
     if user_option == 1:
         # Open a text editor or accept input from command line
         users_input = user_entry_input()
+        # Enter user input to DB
+        to_database(users_input, user_primary_key)
 
+    # User wants to enter a new task
     elif user_option == 2:
         # Open User To-Do List
         users_input = input_task_todo()
-        
     
-
-
-    # Enter user input to DB
-    to_database(users_input, user_primary_key)
-
     print "Recorded. "
     return 0
 
@@ -62,25 +60,29 @@ def log_in(users):
         print '||New user? Type -1||'
         login_attempt = raw_input(u"Username: ")
 
-        if login_attempt == '-1':       # Check whether new user
-            new_user_id = create_user()
+        # Check whether new user
+        # IF new user, create user and return new user object
+        if login_attempt == '-1':
+            new_user = create_user()
             x = False
-            return new_user_id
+            return new_user
 
-        # Existing user, Check credentials
+        # Check for existing user, check credentials
         else:
-            for user in users:
-                # check if the username is in db
-                if user[1] == login_attempt:
+            # check if the username is in db
+            if user_exists(login_attempt):
+
+                # Get the user object
+                user = get_user(login_attempt)
+
+                # Ask for password
+                passw = getpass.getpass(u"Password: ")
                 
-                    # if user is in db, check their password.
-                    passw = getpass.getpass(u"Password: ")
-                    
-                    if passw == user[2]:
-                        x = False
-                        return user[0] # return user's primary key is needed
-                    print 'your user name was found!'
-                    # ask for password #
+                if check_password(passw, user.password) :
+                    x = False
+                    return user # return user's primary key is needed
+                print 'your user name was found!'
+                # ask for password #
     sys.exit(2)
     return
 
@@ -123,10 +125,49 @@ def user_entry_input():
     user_entry = raw_input(">> ")
     return user_entry
 
+# Add a salt and hash users password before saving to the database
+# @: takes user's password
+# $: returns users hashed password and salt
+def encode(password):
+    # generate salt
+    salt = uuid.uuid4().hex
+    return hashlib.sha256(salt.encode() + password.encode()).hexdigest() + \
+        ':' + salt
+
+# Check if the user input password matches the hashed password + salt in db
+def check_password(input_password, encoded_password):
+    hashed_password, salt = encoded_password.split(':')
+    if hashlib.sha256(salt + input_password).hexdigest() == hashed_password :
+        return True
+    else:
+        return False
+
 def input_task_todo():
     return
+
 # ************************ DATABASE - FUNCTIONS ******************************* 
 # ********************************* - ***************************************** 
+
+# Check if the username is in the user table
+def user_exists(user):
+    query = Model.User.select().where(Model.User.username == user)
+    if query.exists():
+        return True
+    else:
+        return False
+
+# return user object from Database
+# Error is the username does not exist
+def get_user(username):
+    try:
+        user = Model.User.get(Model.User.username == username)
+        return user
+    except Exception as e:
+        print "failed to find user %s! Error 2"%username
+        sys.exit(2)
+
+
+
 def checktables():
     # cur.execute("CREATE TABLE IF NOT EXISTS Temporary(Id INT)
     return
@@ -137,28 +178,18 @@ def create_user():
     
     uname = raw_input("[new] Username: ")       # Get username
     
-    tenta_password = getpass.getpass('Password: ')    # Get password
+    new_password = getpass.getpass('Password: ')    # Get password
+
+    hashed_password = encode(new_password)
     
     # insert user info into user table in Model
-    user = Model.User(username=uname, password=tenta_password)
+    user = Model.User(username=uname, password=hashed_password)
     user.save()
             
     # return new user's ID
-    return user.id
+    return user
 
 # ***************************************************************************** 
-# Get a list of all of the usernames and passwords
-def get_usernames_fDB():
-    usernames = Model.User
-    rows = []
-
-    # adds username/password to a tuple
-    for user in usernames.select():
-        rows.append((user.id, user.username, user.password))
-    return rows
-
-# ***************************************************************************** 
-
 def to_database(users_input, user_primary_key):
 
     # keep dates as gregorian ordinal
@@ -167,7 +198,6 @@ def to_database(users_input, user_primary_key):
     # Enter data to database *that was easy*
     Model.Entry.create(owner_id=user_primary_key, body=users_input, \
         timestamp=todays_date)
-
     return
 
         
