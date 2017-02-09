@@ -13,7 +13,7 @@
 #
 # UPDATE (Sept 26, 2016): I will make a quick local journal program then
 #   Proceed to make a web server version, maybe with SSH storage abilities...
-
+#
 
 import sys
 from datetime import date, datetime
