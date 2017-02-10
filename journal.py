@@ -24,10 +24,9 @@ import uuid
 
 def main():
 
-    user_rows = get_usernames_fDB()
 
     # Log into or create user, Always returns User's ID key
-    user_primary_key = log_in(user_rows)
+    user_primary_key = log_in()
 
     # Introduce program
     user_option = menu_options()
@@ -49,7 +48,7 @@ def main():
 
 # ***************************************************************************** 
 # A login/sign-up function. also a quick greeting.
-def log_in(users):
+def log_in():
 
     # Print many new lines
     print "\nGreetings, welcome to QEntries"

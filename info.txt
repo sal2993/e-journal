@@ -1,0 +1,7 @@
+###### TO SET-UP DATABASE ######
+1) Open Python Interpreter
+2) run 'import Model'
+        'Model.db.connect()'
+        'Model.db.create_tables([Model.User, Model.Entry])'
+2 - 1) That will create the database you need to run the e-journal
+3) ## export the journal.py to /bin ##

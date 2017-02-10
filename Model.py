@@ -3,7 +3,7 @@
 from peewee import *
 import datetime
 
-db = SqliteDatabase('/home/sal/bin/entries2.db')
+db = SqliteDatabase('entries2.db')
 
 class User(Model):
     username = CharField()
